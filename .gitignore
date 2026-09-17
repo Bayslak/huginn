@@ -1,0 +1,11 @@
+# Odin build output
+bin/
+*.exe
+*.pdb
+*.obj
+*.dll
+
+# VS Code
+.vscode/
+
+huginn
