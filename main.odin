@@ -58,20 +58,31 @@ main :: proc() {
 
     fmt.printfln("Bytes produced: %d", n_b_produced)
 
-	rec := (^USN_RECORD_V2)(&buff[8])
-	fmt.printfln("Record length: %d", rec.RecordLength)
-	fmt.printfln("File name length: %d", rec.FileNameLength)
+	offset: u32 = 8
+	files_found := 0
 
-	// name position is 8 + FileNameOffset
-	// I have to take the bytes from 8 + FileNameOffset to FileNameLenght / 2 as []u16
-	sliced_buffer := ([^]u16)(&buff[8 + rec.FileNameOffset])
-	sliced_name := sliced_buffer[:rec.FileNameLength / 2]
+	for offset < n_b_produced {
+		rec := (^USN_RECORD_V2)(&buff[offset])
+		fmt.printfln("Record length: %d", rec.RecordLength)
+		fmt.printfln("File name length: %d", rec.FileNameLength)
 
-	name_buff: [512]u8
-	n_b := unicode.decode_to_utf8(name_buff[:], sliced_name)
-	name := string(name_buff[:n_b])
+		// name position is 8 + FileNameOffset
+		// I have to take the bytes from 8 + FileNameOffset to FileNameLenght / 2 as []u16
+		sliced_buffer := ([^]u16)(&buff[(u16)(offset) + rec.FileNameOffset])
+		sliced_name := sliced_buffer[:rec.FileNameLength / 2]
+	
+		name_buff: [512]u8
+		n_b := unicode.decode_to_utf8(name_buff[:], sliced_name)
+		name := string(name_buff[:n_b])
+	
+		fmt.printfln("Name found: %v", name)
 
-	fmt.printfln("Name found: %v", name)
+		offset += rec.RecordLength
+
+		files_found += 1
+	} 
+
+	fmt.printfln("%v files found.", files_found)
 	fmt.printfln("End")
 }
 
