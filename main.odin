@@ -1,13 +1,14 @@
 package main
 
 import "core:fmt"
-import "core:strings"
+import unicode "core:unicode/utf16"
 import swin "core:sys/windows"
 
 FSCTL_ENUM_USN_DATA :: 0x000900b3
 
 main :: proc() {
 	fmt.println("Helloooo")
+	fmt.printfln("size = %d", size_of(USN_RECORD_V2))
 
 	path: swin.wstring
 	path = swin.utf8_to_wstring("\\\\.\\C:")
@@ -56,6 +57,21 @@ main :: proc() {
     }
 
     fmt.printfln("Bytes produced: %d", n_b_produced)
+
+	rec := (^USN_RECORD_V2)(&buff[8])
+	fmt.printfln("Record length: %d", rec.RecordLength)
+	fmt.printfln("File name length: %d", rec.FileNameLength)
+
+	// name position is 8 + FileNameOffset
+	// I have to take the bytes from 8 + FileNameOffset to FileNameLenght / 2 as []u16
+	sliced_buffer := ([^]u16)(&buff[8 + rec.FileNameOffset])
+	sliced_name := sliced_buffer[:rec.FileNameLength / 2]
+
+	name_buff: [512]u8
+	n_b := unicode.decode_to_utf8(name_buff[:], sliced_name)
+	name := string(name_buff[:n_b])
+
+	fmt.printfln("Name found: %v", name)
 	fmt.printfln("End")
 }
 
@@ -63,4 +79,20 @@ MFT_ENUM_DATA :: struct {
     StartFileReferenceNumber: swin.DWORDLONG,
     LowUsn: i64,
     HighUsn: i64,
+}
+
+USN_RECORD_V2 :: struct #packed {
+	RecordLength: swin.DWORD,
+	MajorVersion: swin.WORD,
+	MinorVersion: swin.WORD,
+	FileReferenceNumber: swin.DWORDLONG,
+	ParentFileReferenceNumber: swin.DWORDLONG,
+	Usn: i64,
+	TimeStamp: swin.LARGE_INTEGER,
+	Reason: swin.DWORD,
+	SourceInfo: swin.DWORD,
+	SecurityId: swin.DWORD,
+	FileAttributes: swin.DWORD,
+	FileNameLength: swin.WORD,
+	FileNameOffset: swin.WORD,
 }
