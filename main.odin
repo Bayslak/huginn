@@ -114,11 +114,23 @@ main :: proc() {
 	fmt.printfln("%v files found.", files_found)
 	fmt.printfln("%v map dimension.", len(f_map))
 
+	//for frn, file in f_map {
+	//	fmt.printfln("Testing frn %v (%v)", frn, file.FileName)
+	//	path := build_path(f_map, frn, "C:")
+	//	fmt.printfln("Path: %v", path)
+	//	break
+	//}
+
+	result_partial_search: [dynamic]u64
 	for frn, file in f_map {
-		fmt.printfln("Testing frn %v (%v)", frn, file.FileName)
+		if strings.contains(file.FileName, "desktop") {
+			append(&result_partial_search, frn)
+		}
+	}
+
+	for frn in result_partial_search {
 		path := build_path(f_map, frn, "C:")
 		fmt.printfln("Path: %v", path)
-		break
 	}
 }
 
@@ -185,7 +197,6 @@ build_path :: proc(files: map[u64]WindowsFile, frn: u64, volume: string) -> stri
 	}
 
 	append(&path_files, volume)
-	fmt.printfln("Found %v path_files.", len(path_files))
 
 	first := true
 	#reverse for pf, n in path_files {
