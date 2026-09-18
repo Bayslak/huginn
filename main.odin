@@ -48,39 +48,52 @@ main :: proc() {
 
     buff: [64 * 1024]u8 //64KB
     n_b_produced: u32
-
-    res := swin.DeviceIoControl(handle, FSCTL_ENUM_USN_DATA, &mft, size_of(mft), &buff[0], len(buff), &n_b_produced, nil)
-
-    if !res {
-        r_error := swin.GetLastError()
-        fmt.eprintfln("It was impossible to index files. Error: %d", r_error)
-    }
-
-    fmt.printfln("Bytes produced: %d", n_b_produced)
-
-	offset: u32 = 8
+	current_start_file_reference_number: swin.DWORDLONG
+	current_low_usn: i64
+	more_to_read := true
 	files_found := 0
 
-	for offset < n_b_produced {
-		rec := (^USN_RECORD_V2)(&buff[offset])
-		fmt.printfln("Record length: %d", rec.RecordLength)
-		fmt.printfln("File name length: %d", rec.FileNameLength)
+	for more_to_read {
+		mft.StartFileReferenceNumber = current_start_file_reference_number
 
-		// name position is 8 + FileNameOffset
-		// I have to take the bytes from 8 + FileNameOffset to FileNameLenght / 2 as []u16
-		sliced_buffer := ([^]u16)(&buff[(u16)(offset) + rec.FileNameOffset])
-		sliced_name := sliced_buffer[:rec.FileNameLength / 2]
+		res := swin.DeviceIoControl(handle, FSCTL_ENUM_USN_DATA, &mft, size_of(mft), &buff[0], len(buff), &n_b_produced, nil)
 	
-		name_buff: [512]u8
-		n_b := unicode.decode_to_utf8(name_buff[:], sliced_name)
-		name := string(name_buff[:n_b])
+		if !res {
+			r_error := swin.GetLastError()
+			//fmt.eprintfln("It was impossible to index files. Error: %d", r_error)
+			more_to_read = false
+			continue
+		}
 	
-		fmt.printfln("Name found: %v", name)
-
-		offset += rec.RecordLength
-
-		files_found += 1
-	} 
+		next_start := (^u64)(&buff[0])^
+		//fmt.printfln("StartFileReferenceNumber: %v", next_start)
+		current_start_file_reference_number = next_start
+	
+		//fmt.printfln("Bytes produced: %d", n_b_produced)
+	
+		offset: u32 = 8
+	
+		for offset < n_b_produced {
+			rec := (^USN_RECORD_V2)(&buff[offset])
+			//fmt.printfln("Record length: %d", rec.RecordLength)
+			//fmt.printfln("File name length: %d", rec.FileNameLength)
+	
+			// name position is 8 + FileNameOffset
+			// I have to take the bytes from 8 + FileNameOffset to FileNameLenght / 2 as []u16
+			sliced_buffer := ([^]u16)(&buff[(u16)(offset) + rec.FileNameOffset])
+			sliced_name := sliced_buffer[:rec.FileNameLength / 2]
+		
+			name_buff: [512]u8
+			n_b := unicode.decode_to_utf8(name_buff[:], sliced_name)
+			name := string(name_buff[:n_b])
+		
+			//fmt.printfln("Name found: %v", name)
+	
+			offset += rec.RecordLength
+	
+			files_found += 1
+		} 
+	}
 
 	fmt.printfln("%v files found.", files_found)
 	fmt.printfln("End")
