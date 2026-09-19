@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:os"
 import "core:strings"
 import swin "core:sys/windows"
 import unicode "core:unicode/utf16"
@@ -121,9 +122,16 @@ main :: proc() {
 	//	break
 	//}
 
+	// ask for what its needed to be searched
+	buf := [2048]u8{}
+	fmt.println("What are you looking for?")
+	total_read, err := os.read(os.stdin, buf[:])
+
+	file_to_look_for := strings.trim_space(string(buf[:total_read]))
+
 	result_partial_search: [dynamic]u64
 	for frn, file in f_map {
-		if strings.contains(file.FileName, "desktop") {
+		if strings.contains(file.FileName, file_to_look_for) {
 			append(&result_partial_search, frn)
 		}
 	}
