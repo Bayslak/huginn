@@ -77,7 +77,7 @@ main :: proc() {
 	volume_exist := false
 
 	for volume in volumes_list {
-		if strings.contains(volume, volume_to_use) {
+		if strings.contains(strings.to_lower(volume), strings.to_lower(volume_to_use)) {
 			volume_exist = true
 		}
 	}
@@ -184,6 +184,7 @@ main :: proc() {
 			f_map[rec.FileReferenceNumber] = WindowsFile {
 				ParentFileReferenceNumber = rec.ParentFileReferenceNumber,
 				FileName                  = strings.clone(name),
+				FileNameLower             = strings.clone(strings.to_lower(name)),
 			}
 		}
 	}
@@ -204,10 +205,11 @@ main :: proc() {
 	total_read, err := os.read(os.stdin, buf[:])
 
 	file_to_look_for := strings.trim_space(string(buf[:total_read]))
+	query_lower := strings.to_lower(file_to_look_for)
 
 	result_partial_search: [dynamic]u64
 	for frn, file in f_map {
-		if strings.contains(file.FileName, file_to_look_for) {
+		if strings.contains(file.FileNameLower, query_lower) {
 			append(&result_partial_search, frn)
 		}
 	}
@@ -242,6 +244,7 @@ USN_RECORD_V2 :: struct #packed {
 
 WindowsFile :: struct {
 	FileName:                  string,
+	FileNameLower:             string,
 	ParentFileReferenceNumber: u64,
 }
 
@@ -280,7 +283,7 @@ build_path :: proc(files: map[u64]WindowsFile, frn: u64, volume: string) -> stri
 		pfrn = pfile.ParentFileReferenceNumber
 	}
 
-	append(&path_files, volume)
+	append(&path_files, fmt.tprintf("%v:", volume))
 
 	first := true
 	#reverse for pf, n in path_files {
