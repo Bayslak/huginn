@@ -7,12 +7,88 @@ import swin "core:sys/windows"
 import unicode "core:unicode/utf16"
 
 FSCTL_ENUM_USN_DATA :: 0x000900b3
+POSSIBLE_VOLUMES :: enum {
+	A,
+	B,
+	C,
+	D,
+	E,
+	F,
+	G,
+	H,
+	I,
+	L,
+	M,
+	N,
+	O,
+	P,
+	Q,
+	R,
+	S,
+	T,
+	U,
+	V,
+	Z,
+}
 
 main :: proc() {
-	fmt.printfln("size = %d", size_of(USN_RECORD_V2))
+	//fmt.printfln("size = %d", size_of(USN_RECORD_V2))
+
+	volumes_list: [dynamic]string
+
+	for volume, index in POSSIBLE_VOLUMES {
+		t_path := swin.utf8_to_wstring(fmt.tprintf("\\\\.\\%v:", volume))
+		v_handle := swin.CreateFileW(
+			t_path,
+			swin.GENERIC_READ,
+			swin.FILE_SHARE_WRITE | swin.FILE_SHARE_READ | swin.FILE_SHARE_DELETE,
+			nil,
+			swin.OPEN_EXISTING,
+			swin.FILE_ATTRIBUTE_NORMAL,
+			nil,
+		)
+
+		if v_handle == swin.INVALID_HANDLE_VALUE {
+			o_error := swin.GetLastError()
+			continue
+		}
+
+		append(&volumes_list, fmt.tprintf("%v:", volume))
+
+		close_handle := swin.CloseHandle(v_handle)
+
+		if !close_handle {
+			c_error := swin.GetLastError()
+			fmt.eprintf("It was impossible to close the handle. Error: %d", c_error)
+		}
+	}
+
+	fmt.println("Volumes avaiable: ")
+	for volume in volumes_list {
+		fmt.println(volume)
+	}
+
+	fmt.println("Please, choose a volume to search into.")
+
+	v_buf := [2048]u8{}
+	v_total_read, v_err := os.read(os.stdin, v_buf[:])
+
+	volume_to_use := strings.trim_space(string(v_buf[:v_total_read]))
+	volume_exist := false
+
+	for volume in volumes_list {
+		if strings.contains(volume, volume_to_use) {
+			volume_exist = true
+		}
+	}
+
+	if !volume_exist {
+		fmt.eprintln("The volume you selected is not present.")
+		return
+	}
 
 	path: swin.wstring
-	path = swin.utf8_to_wstring("\\\\.\\C:")
+	path = swin.utf8_to_wstring(fmt.tprintf("\\\\.\\%v:", volume_to_use))
 
 	handle := swin.CreateFileW(
 		path,
@@ -137,7 +213,7 @@ main :: proc() {
 	}
 
 	for frn in result_partial_search {
-		path := build_path(f_map, frn, "C:")
+		path := build_path(f_map, frn, volume_to_use)
 		fmt.printfln("Path: %v", path)
 	}
 }
@@ -213,7 +289,7 @@ build_path :: proc(files: map[u64]WindowsFile, frn: u64, volume: string) -> stri
 		}
 
 		strings.write_string(&p_builder, pf)
-		if first { first = false }
+		if first {first = false}
 	}
 
 	return strings.to_string(p_builder)
