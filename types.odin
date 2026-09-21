@@ -54,3 +54,14 @@ WindowsFile :: struct {
 	FileNameLower:             string,
 	ParentFileReferenceNumber: u64,
 }
+
+Indexed_Volume :: struct {
+	letter: string,
+	files:  map[u64]WindowsFile,
+}
+
+Search_Result :: struct {
+	frn:   u64,
+	path:  string,
+	idx_v: ^Indexed_Volume,
+}

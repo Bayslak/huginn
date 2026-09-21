@@ -89,3 +89,12 @@ open_volume :: proc(path: swin.wstring) -> (swin.HANDLE, bool) {
 
 	return handle, true
 }
+
+close_volume :: proc(handle: swin.HANDLE) {
+	close_handle := swin.CloseHandle(handle)
+
+	if !close_handle {
+		c_error := swin.GetLastError()
+		fmt.eprintf("It was impossible to close the handle. Error: %d", c_error)
+	}
+}
