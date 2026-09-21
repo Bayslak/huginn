@@ -5,6 +5,7 @@ import "core:os"
 import "core:strings"
 import swin "core:sys/windows"
 import unicode "core:unicode/utf16"
+import rl "vendor:raylib"
 
 FSCTL_ENUM_USN_DATA :: 0x000900b3
 POSSIBLE_VOLUMES :: enum {
@@ -30,6 +31,8 @@ POSSIBLE_VOLUMES :: enum {
 	V,
 	Z,
 }
+
+bg : [3]u8 = { 90, 95, 100 }
 
 main :: proc() {
 	//fmt.printfln("size = %d", size_of(USN_RECORD_V2))
@@ -217,6 +220,21 @@ main :: proc() {
 	for frn in result_partial_search {
 		path := build_path(f_map, frn, volume_to_use)
 		fmt.printfln("Path: %v", path)
+	}
+
+	// raylib
+	rl.InitWindow(720, 600, "HUGINN")
+	defer rl.CloseWindow()
+
+	for !rl.WindowShouldClose() {
+		defer free_all(context.temp_allocator)
+
+		rl.BeginDrawing()
+		rl.ClearBackground({ bg.r, bg.g, bg.b, 255 })
+		
+		rl.DrawText("Huginn pronto.", 20, 20, 20, rl.WHITE)
+
+		rl.EndDrawing()
 	}
 }
 
