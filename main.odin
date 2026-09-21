@@ -42,9 +42,7 @@ main :: proc() {
 	total_read, err := os.read(os.stdin, buf[:])
 
 	file_to_look_for := strings.trim_space(string(buf[:total_read]))
-	query_lower := strings.to_lower(file_to_look_for)
-
-	files_found := search(f_map, query_lower)
+	files_found := search(f_map, file_to_look_for)
 
 	for frn in files_found {
 		path := build_path(f_map, frn, volume_to_use)
