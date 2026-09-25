@@ -5,10 +5,10 @@ import "core:strings"
 import rl "vendor:raylib"
 
 COL_NAME_X :: 20
-COL_DIR_X :: 340
-COL_PATH_X :: 400
-COL_VOL_X :: 1240
-RIGHT_PAD :: 60
+COL_DIR_X :: 400
+COL_PATH_X :: 460
+COL_VOL_X :: 1200
+RIGHT_PAD :: 40
 
 volume_color :: proc(letter: string) -> rl.Color {
 	switch letter {
@@ -47,8 +47,14 @@ draw_search_screen :: proc(
 }
 
 print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
-	y: f32 = 60
+	y: f32 = 90
 	max_visible := min(len(results), 30)
+
+	rl.DrawTextEx(font, "Name", {COL_NAME_X, 60}, 18, 1, COLOR_TEXT)
+	rl.DrawTextEx(font, "IsDir", {COL_DIR_X, 60}, 18, 1, COLOR_TEXT)
+	rl.DrawTextEx(font, "Path", {COL_PATH_X, 60}, 18, 1, COLOR_TEXT)
+	rl.DrawTextEx(font, "Volume", {COL_VOL_X, 60}, 18, 1, COLOR_TEXT)
+	rl.DrawLineEx({COL_NAME_X, 78}, {WINDOW_SIZE[0] - COL_NAME_X, 78}, 1, COLOR_TEXT)
 
 	for i in 0 ..< max_visible {
 		r := results[i]
@@ -62,9 +68,9 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 			}
 		}
 
-		filename_position := rl.Vector2{20, y}
-		type_position := rl.Vector2{400, y}
-		folder_position := rl.Vector2{440, y}
+		filename_position := rl.Vector2{COL_NAME_X, y}
+		type_position := rl.Vector2{COL_DIR_X, y}
+		folder_position := rl.Vector2{COL_PATH_X, y}
 
 		folder, filename := split_path(r.path)
 
@@ -72,7 +78,7 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 		filename_txt := truncate(
 			font,
 			filename,
-			WINDOW_SIZE[0] - (folder_position[0] + type_position[0] + filename_position[0]),
+			COL_DIR_X - COL_NAME_X - RIGHT_PAD,
 			20,
 			1,
 		)
@@ -115,7 +121,7 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 }
 
 split_path :: proc(path: string) -> (folder: string, filename: string) {
-    volume_idx := strings.index(path, "\\")
+	volume_idx := strings.index(path, "\\")
 	filename_idx := strings.last_index(path, "\\")
 
 	if filename_idx < 0 {
