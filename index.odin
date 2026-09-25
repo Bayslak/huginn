@@ -2,10 +2,11 @@ package main
 
 import "core:fmt"
 import "core:strings"
+import "core:sync"
 import unicode "core:unicode/utf16"
 import swin "core:sys/windows"
 
-get_all_files_of_volume :: proc(handle: swin.HANDLE) -> (map[u64]WindowsFile, bool) {
+get_all_files_of_volume :: proc(handle: swin.HANDLE, files_indexed: ^int) -> (map[u64]WindowsFile, bool) {
 	mft := MFT_ENUM_DATA {
 		StartFileReferenceNumber = 0,
 		LowUsn                   = 0,
@@ -75,6 +76,8 @@ get_all_files_of_volume :: proc(handle: swin.HANDLE) -> (map[u64]WindowsFile, bo
 				FileName                  = strings.clone(name),
 				FileNameLower             = strings.clone(strings.to_lower(name)),
 			}
+
+			sync.atomic_store(files_indexed, files_found)
 		}
 	}
 

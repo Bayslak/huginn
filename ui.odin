@@ -17,6 +17,7 @@ APP_STATE :: enum {
 Load_Context :: struct {
 	files_maps:   ^[dynamic]Indexed_Volume,
 	loading_done: ^bool,
+	files_indexed: ^int,
 }
 
 FONTS_AVAIABLE :: enum {
@@ -24,8 +25,10 @@ FONTS_AVAIABLE :: enum {
 	RobotoItalic,
 }
 
+WINDOW_SIZE :: rl.Vector2 { 1280, 720 }
+
 start_application :: proc() {
-	rl.InitWindow(720, 600, "HUGINN")
+	rl.InitWindow(auto_cast WINDOW_SIZE[0], auto_cast WINDOW_SIZE[1], "HUGINN")
 	defer rl.CloseWindow()
 
 	fonts_map := load_fonts()
@@ -34,6 +37,7 @@ start_application :: proc() {
 
 	loading_done := false
 	loading_worker_started := false
+	files_indexed := 0
 
 	files_maps: [dynamic]Indexed_Volume
 	query: [dynamic]u8
@@ -42,6 +46,7 @@ start_application :: proc() {
 	loading_thread_data := Load_Context {
 		files_maps   = &files_maps,
 		loading_done = &loading_done,
+		files_indexed = &files_indexed,
 	}
 
 	for !rl.WindowShouldClose() {
@@ -58,7 +63,7 @@ start_application :: proc() {
 				loading_worker_started = true
 			}
 
-			loading_screen_animation(fonts_map[FONTS_AVAIABLE.Roboto])
+			draw_loading_screen(fonts_map[FONTS_AVAIABLE.Roboto], &files_indexed)
 			if sync.atomic_load(&loading_done) {
 				state = APP_STATE.Searching
 			}
@@ -111,7 +116,7 @@ load_all_files_thread :: proc(data: ^Load_Context) {
 			continue
 		}
 
-		fv_map, fv_ok := get_all_files_of_volume(handle)
+		fv_map, fv_ok := get_all_files_of_volume(handle, data.files_indexed)
 		if !fv_ok {
 			fmt.eprintfln("It was impossible to get files on volume %v", volume)
 			continue
@@ -129,11 +134,28 @@ load_all_files_thread :: proc(data: ^Load_Context) {
 	sync.atomic_store(data.loading_done, true)
 }
 
+draw_loading_screen :: proc(font: rl.Font, files_indexed: ^int) {
+	big_title_size := rl.MeasureTextEx(font, "HUGINN", 40, 1)
+	rl.DrawTextEx(font, "HUGINN", rl.Vector2 { WINDOW_SIZE[0] / 2 - big_title_size[0] / 2, 30 }, 40, 1, rl.WHITE)
+
+	indexing_files_text := strings.clone_to_cstring(fmt.tprintf("we are indexing your files"), context.temp_allocator)
+	sub_title_size := rl.MeasureTextEx(font, indexing_files_text, 20, 1)
+	rl.DrawTextEx(font, indexing_files_text, rl.Vector2 { WINDOW_SIZE[0] / 2 - sub_title_size[0] / 2, 80 }, 20, 1, rl.WHITE)
+
+	loading_screen_animation(font)
+
+	indexed_files_text := strings.clone_to_cstring(fmt.tprintf("%v", sync.atomic_load(files_indexed)), context.temp_allocator)
+	indexed_files_text_size := rl.MeasureTextEx(font, indexed_files_text, 20, 1)
+	rl.DrawTextEx(font, indexed_files_text, rl.Vector2 { WINDOW_SIZE[0] / 2 - indexed_files_text_size[0] / 2, 140 }, 20, 1, rl.WHITE)
+}
+
 loading_screen_animation :: proc(font: rl.Font) {
 	dots := int(rl.GetTime() * 2) % 4 // 0,1,2,3 that cycles
-	text := fmt.tprintf("Caricamento%s", strings.repeat(".", dots, context.temp_allocator))
+	text := fmt.tprintf("%s", strings.repeat(".", dots, context.temp_allocator))
 	text_cstr := strings.clone_to_cstring(text, context.temp_allocator)
-	rl.DrawTextEx(font, text_cstr, 20, 40, 2, rl.WHITE)
+
+	text_size := rl.MeasureTextEx(font, text_cstr, 40, 2)
+	rl.DrawTextEx(font, text_cstr, rl.Vector2 { WINDOW_SIZE[0] / 2 - text_size[0] / 2, 100 }, 40, 2, rl.WHITE)
 }
 
 load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
