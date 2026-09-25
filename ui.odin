@@ -15,13 +15,20 @@ APP_STATE :: enum {
 }
 
 Load_Context :: struct {
-	files_maps: ^[dynamic]Indexed_Volume,
+	files_maps:   ^[dynamic]Indexed_Volume,
 	loading_done: ^bool,
+}
+
+FONTS_AVAIABLE :: enum {
+	Roboto,
+	RobotoItalic,
 }
 
 start_application :: proc() {
 	rl.InitWindow(720, 600, "HUGINN")
 	defer rl.CloseWindow()
+
+	fonts_map := load_fonts()
 
 	state := APP_STATE.Loading
 
@@ -33,7 +40,7 @@ start_application :: proc() {
 	results: [dynamic]Search_Result
 
 	loading_thread_data := Load_Context {
-		files_maps = &files_maps,
+		files_maps   = &files_maps,
 		loading_done = &loading_done,
 	}
 
@@ -51,7 +58,7 @@ start_application :: proc() {
 				loading_worker_started = true
 			}
 
-			loading_screen_animation()
+			loading_screen_animation(fonts_map[FONTS_AVAIABLE.Roboto])
 			if sync.atomic_load(&loading_done) {
 				state = APP_STATE.Searching
 			}
@@ -72,21 +79,22 @@ start_application :: proc() {
 			}
 
 			query_cstr := strings.clone_to_cstring(string(query[:]), context.temp_allocator)
-			rl.DrawText(query_cstr, 20, 20, 20, rl.WHITE)
+			rl.DrawTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 20, 30, 1, rl.WHITE)
 
-			print_results(results)
+			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto])
 		}
 	}
 }
 
-print_results :: proc(results: [dynamic]Search_Result) {
-	y: i32 = 60
+print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
+	y: f32 = 60
 	max_visible := min(len(results), 30)
 
 	for i in 0 ..< max_visible {
 		r := results[i]
 		path_cstr := strings.clone_to_cstring(r.path, context.temp_allocator)
-		rl.DrawText(path_cstr, 20, y, 18, rl.WHITE)
+		position := rl.Vector2 { 20, y }
+		rl.DrawTextEx(font, path_cstr, position, 18, 1, rl.WHITE)
 		y += 20
 	}
 }
@@ -121,9 +129,22 @@ load_all_files_thread :: proc(data: ^Load_Context) {
 	sync.atomic_store(data.loading_done, true)
 }
 
-loading_screen_animation :: proc() {
+loading_screen_animation :: proc(font: rl.Font) {
 	dots := int(rl.GetTime() * 2) % 4 // 0,1,2,3 that cycles
 	text := fmt.tprintf("Caricamento%s", strings.repeat(".", dots, context.temp_allocator))
 	text_cstr := strings.clone_to_cstring(text, context.temp_allocator)
-	rl.DrawText(text_cstr, 20, 20, 20, rl.WHITE)
+	rl.DrawTextEx(font, text_cstr, 20, 40, 2, rl.WHITE)
+}
+
+load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
+
+	fonts_map := make(map[FONTS_AVAIABLE]rl.Font)
+
+	robotoFont := rl.LoadFontEx("./fonts/Roboto-VariableFont_wdth,wght.ttf", 60, nil, 0)
+	robotoItalicFont := rl.LoadFontEx("./fonts/Roboto-Italic-VariableFont_wdth,wght.ttf", 60, nil, 0)
+
+	fonts_map[FONTS_AVAIABLE.Roboto] = robotoFont
+	fonts_map[FONTS_AVAIABLE.RobotoItalic] = robotoItalicFont 
+
+	return fonts_map
 }

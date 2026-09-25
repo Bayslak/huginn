@@ -119,7 +119,7 @@ build_path :: proc(files: map[u64]WindowsFile, frn: u64, volume: string) -> stri
 		pfrn = pfile.ParentFileReferenceNumber
 	}
 
-	append(&path_files, fmt.tprintf("%v:", volume))
+	append(&path_files, fmt.tprintf("%v", volume))
 
 	first := true
 	#reverse for pf, n in path_files {
