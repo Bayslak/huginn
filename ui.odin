@@ -5,7 +5,6 @@ import "core:strings"
 import "core:sync"
 import swin "core:sys/windows"
 import "core:thread"
-import "core:time"
 import rl "vendor:raylib"
 
 bg: [3]u8 = {90, 95, 100}
@@ -17,7 +16,7 @@ APP_STATE :: enum {
 
 Load_Context :: struct {
 	files_maps: ^[dynamic]Indexed_Volume,
-	is_loading: ^bool,
+	loading_done: ^bool,
 }
 
 start_application :: proc() {
@@ -26,7 +25,7 @@ start_application :: proc() {
 
 	state := APP_STATE.Loading
 
-	is_loading := false
+	loading_done := false
 	loading_worker_started := false
 
 	files_maps: [dynamic]Indexed_Volume
@@ -35,7 +34,7 @@ start_application :: proc() {
 
 	loading_thread_data := Load_Context {
 		files_maps = &files_maps,
-		is_loading = &is_loading,
+		loading_done = &loading_done,
 	}
 
 	for !rl.WindowShouldClose() {
@@ -50,11 +49,10 @@ start_application :: proc() {
 			if !loading_worker_started {
 				thread.create_and_start_with_poly_data(&loading_thread_data, load_all_files_thread)
 				loading_worker_started = true
-				is_loading = true
 			}
 
 			loading_screen_animation()
-			if !sync.atomic_load(&is_loading) {
+			if sync.atomic_load(&loading_done) {
 				state = APP_STATE.Searching
 			}
 		case .Searching:
@@ -120,7 +118,7 @@ load_all_files_thread :: proc(data: ^Load_Context) {
 		close_volume(handle)
 	}
 
-	sync.atomic_store(data.is_loading, false)
+	sync.atomic_store(data.loading_done, true)
 }
 
 loading_screen_animation :: proc() {
