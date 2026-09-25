@@ -41,13 +41,18 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 			}
 		}
 
-		folder, filename := split_path(r.path)
 		filename_position := rl.Vector2{20, y}
 		type_position := rl.Vector2{400, y}
 		folder_position := rl.Vector2{440, y}
+
+        folder, filename := split_path(r.path)
+
+        folder_txt := truncate(font, folder, WINDOW_SIZE[0] - folder_position[0] - 30, 18, 1)
+        filename_txt := truncate(font, filename, WINDOW_SIZE[0] - (folder_position[0] + type_position[0] + filename_position[0]), 20, 1)
+
 		rl.DrawTextEx(
 			font,
-			strings.clone_to_cstring(filename, context.temp_allocator),
+			strings.clone_to_cstring(filename_txt, context.temp_allocator),
 			filename_position,
 			20,
 			1,
@@ -67,7 +72,7 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 
 		rl.DrawTextEx(
 			font,
-			strings.clone_to_cstring(folder, context.temp_allocator),
+			strings.clone_to_cstring(folder_txt, context.temp_allocator),
 			folder_position,
 			18,
 			1,
@@ -88,4 +93,21 @@ split_path :: proc(path: string) -> (folder: string, filename: string) {
 	filename = path[filename_idx + 1:]
 
 	return folder, filename
+}
+
+truncate :: proc(font: rl.Font, text: string, max_width: f32, size, spacing: f32) -> string {
+    full := strings.clone_to_cstring(text, context.temp_allocator)
+    if rl.MeasureTextEx(font, full, size, spacing).x <= max_width {
+        return text
+    }
+
+    for end := len(text); end > 0; end -= 1 {
+        candidate := fmt.tprintf("%s...", text[:end])
+        cand_cstr := strings.clone_to_cstring(candidate, context.temp_allocator)
+        if rl.MeasureTextEx(font, cand_cstr, size, spacing).x <= max_width {
+            return candidate
+        }
+    }
+
+    return "..."
 }
