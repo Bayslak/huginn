@@ -55,23 +55,8 @@ start_application :: proc() {
 				state = APP_STATE.Searching
 			}
 		case .Searching:
-			for {
-				c := rl.GetCharPressed()
-				if c == 0 do break
-				append(&query, u8(c))
-			}
-
-			if rl.IsKeyPressed(rl.KeyboardKey.BACKSPACE) {
-				pop(&query)
-			}
-
-			if rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
-				clear(&results)
-				results = search(files_maps, string(query[:]))
-			}
-
-			query_cstr := strings.clone_to_cstring(string(query[:]), context.temp_allocator)
-			rl.DrawTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 20, 30, 1, COLOR_TEXT)
+			
+			draw_search_screen(&query, &results, files_maps, fonts_map)
 
 			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto])
 		}

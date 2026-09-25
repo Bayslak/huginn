@@ -5,6 +5,26 @@ import "core:strings"
 import "core:sync"
 import rl "vendor:raylib"
 
+draw_search_screen :: proc(query: ^[dynamic]u8, results: ^[dynamic]Search_Result, files_maps: [dynamic]Indexed_Volume, fonts_map: map[FONTS_AVAIABLE]rl.Font) {
+	for {
+		c := rl.GetCharPressed()
+		if c == 0 do break
+		append(query, u8(c))
+	}
+
+	if rl.IsKeyPressed(rl.KeyboardKey.BACKSPACE) {
+		pop(query)
+	}
+
+	if rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
+		clear(results)
+		results^ = search(files_maps, string(query[:]))
+	}
+
+	query_cstr := strings.clone_to_cstring(string(query[:]), context.temp_allocator)
+	rl.DrawTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 20, 30, 1, COLOR_TEXT)
+}
+
 print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 	y: f32 = 60
 	max_visible := min(len(results), 30)
