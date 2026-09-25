@@ -14,6 +14,7 @@ COLOR_ACCENT :: rl.Color{55, 138, 221, 255} // light blue
 COLOR_VOL_C :: rl.Color{24, 95, 165, 255} // blue
 COLOR_VOL_D :: rl.Color{15, 110, 86, 255} // verde
 COLOR_HOVER :: rl.Color{230, 229, 223, 255} // hover row
+COLOR_INPUT_BG :: rl.Color{255, 255, 255, 255} // white
 
 load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
 

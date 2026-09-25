@@ -37,13 +37,41 @@ draw_search_screen :: proc(
 		pop(query)
 	}
 
+	if rl.IsKeyPressed(.BACKSPACE) || rl.IsKeyPressedRepeat(.BACKSPACE) {
+		if len(query) > 0 do pop(query)
+	}
+
 	if rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
 		clear(results)
 		results^ = search(files_maps, string(query[:]))
 	}
 
+	box := rl.Rectangle{20, 10, WINDOW_SIZE[0] - 40, 44}
+	rl.DrawRectangleRec(box, COLOR_INPUT_BG)
+	rl.DrawRectangleLinesEx(box, 1.5, COLOR_ACCENT)
+
 	query_cstr := strings.clone_to_cstring(string(query[:]), context.temp_allocator)
-	rl.DrawTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 20, 30, 1, COLOR_TEXT)
+	rl.DrawTextEx(
+		fonts_map[FONTS_AVAIABLE.Roboto],
+		query_cstr,
+		{
+			box.x + 14,
+			box.height - rl.MeasureTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 30, 1).y,
+		},
+		30,
+		1,
+		COLOR_TEXT,
+	)
+
+	draw_blinking_pointer(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, box)
+}
+
+draw_blinking_pointer :: proc(font: rl.Font, query: cstring, box: rl.Rectangle) {
+	if int(rl.GetTime() * 2) % 2 == 0 {
+		qw := rl.MeasureTextEx(font, query, 30, 1)
+		cursor_x := box.x + 14 + qw.x
+		rl.DrawRectangle(i32(cursor_x), i32(box.y + 12), 2, 20, COLOR_TEXT)
+	}
 }
 
 print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
@@ -75,13 +103,7 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 		folder, filename := split_path(r.path)
 
 		folder_txt := truncate(font, folder, COL_VOL_X - COL_PATH_X - RIGHT_PAD, 18, 1)
-		filename_txt := truncate(
-			font,
-			filename,
-			COL_DIR_X - COL_NAME_X - RIGHT_PAD,
-			20,
-			1,
-		)
+		filename_txt := truncate(font, filename, COL_DIR_X - COL_NAME_X - RIGHT_PAD, 20, 1)
 
 		rl.DrawTextEx(
 			font,
