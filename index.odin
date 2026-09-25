@@ -75,6 +75,7 @@ get_all_files_of_volume :: proc(handle: swin.HANDLE, files_indexed: ^int) -> (ma
 				ParentFileReferenceNumber = rec.ParentFileReferenceNumber,
 				FileName                  = strings.clone(name),
 				FileNameLower             = strings.clone(strings.to_lower(name)),
+				is_directory			  = (rec.FileAttributes & swin.FILE_ATTRIBUTE_DIRECTORY) != 0,
 			}
 
 			sync.atomic_store(files_indexed, files_found)

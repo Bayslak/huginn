@@ -9,7 +9,7 @@ search :: proc(indexed_volumes: [dynamic]Indexed_Volume, query: string) -> [dyna
         for frn, file in idx_v.files {
             if strings.contains(file.FileNameLower, query_lower) {
                 f_path := build_path(idx_v.files, frn, idx_v.letter)
-                append(&results, Search_Result { frn = frn, path = strings.clone(f_path), idx_v = &idx_v})
+                append(&results, Search_Result { frn = frn, path = strings.clone(f_path), is_dir = file.is_directory, idx_v = &idx_v})
             }
         }
 	}

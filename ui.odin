@@ -15,8 +15,8 @@ APP_STATE :: enum {
 }
 
 Load_Context :: struct {
-	files_maps:   ^[dynamic]Indexed_Volume,
-	loading_done: ^bool,
+	files_maps:    ^[dynamic]Indexed_Volume,
+	loading_done:  ^bool,
 	files_indexed: ^int,
 }
 
@@ -25,7 +25,7 @@ FONTS_AVAIABLE :: enum {
 	RobotoItalic,
 }
 
-WINDOW_SIZE :: rl.Vector2 { 1280, 720 }
+WINDOW_SIZE :: rl.Vector2{1280, 720}
 
 start_application :: proc() {
 	rl.InitWindow(auto_cast WINDOW_SIZE[0], auto_cast WINDOW_SIZE[1], "HUGINN")
@@ -44,8 +44,8 @@ start_application :: proc() {
 	results: [dynamic]Search_Result
 
 	loading_thread_data := Load_Context {
-		files_maps   = &files_maps,
-		loading_done = &loading_done,
+		files_maps    = &files_maps,
+		loading_done  = &loading_done,
 		files_indexed = &files_indexed,
 	}
 
@@ -54,7 +54,7 @@ start_application :: proc() {
 
 		rl.BeginDrawing()
 		defer rl.EndDrawing()
-		rl.ClearBackground({bg.r, bg.g, bg.b, 255})
+		rl.ClearBackground(COLOR_BG)
 
 		switch state {
 		case .Loading:
@@ -84,7 +84,7 @@ start_application :: proc() {
 			}
 
 			query_cstr := strings.clone_to_cstring(string(query[:]), context.temp_allocator)
-			rl.DrawTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 20, 30, 1, rl.WHITE)
+			rl.DrawTextEx(fonts_map[FONTS_AVAIABLE.Roboto], query_cstr, 20, 30, 1, COLOR_TEXT)
 
 			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto])
 		}
@@ -97,10 +97,85 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 
 	for i in 0 ..< max_visible {
 		r := results[i]
-		path_cstr := strings.clone_to_cstring(r.path, context.temp_allocator)
-		position := rl.Vector2 { 20, y }
-		rl.DrawTextEx(font, path_cstr, position, 18, 1, rl.WHITE)
+
+		row_rect := rl.Rectangle{20, y, 1240, 20} // x, y, width, height
+		mouse := rl.GetMousePosition()
+		if rl.CheckCollisionPointRec(mouse, row_rect) {
+			rl.DrawRectangleRec(row_rect, COLOR_HOVER)
+			if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) {
+				open_file(r.path, r.is_dir)
+			}
+		}
+
+		folder, filename := split_path(r.path)
+		filename_position := rl.Vector2{20, y}
+		type_position := rl.Vector2{400, y}
+		folder_position := rl.Vector2{440, y}
+		rl.DrawTextEx(
+			font,
+			strings.clone_to_cstring(filename, context.temp_allocator),
+			filename_position,
+			20,
+			1,
+			COLOR_TEXT,
+		)
+
+		if r.is_dir {
+			rl.DrawTextEx(
+				font,
+				strings.clone_to_cstring("[dir]", context.temp_allocator),
+				type_position,
+				18,
+				1,
+				COLOR_TEXT,
+			)
+		}
+
+		rl.DrawTextEx(
+			font,
+			strings.clone_to_cstring(folder, context.temp_allocator),
+			folder_position,
+			18,
+			1,
+			COLOR_TEXT_DIM,
+		)
 		y += 20
+	}
+}
+
+split_path :: proc(path: string) -> (folder: string, filename: string) {
+	filename_idx := strings.last_index(path, "\\")
+
+	if filename_idx < 0 {
+		return "", path // no folders, it means that the path is the name of the file
+	}
+
+	folder = path[:filename_idx]
+	filename = path[filename_idx + 1:]
+
+	return folder, filename
+}
+
+open_file :: proc(path: string, is_dir: bool) {
+	if is_dir {
+		swin.ShellExecuteW(
+			nil,
+			swin.utf8_to_wstring("open"),
+			swin.utf8_to_wstring(path),
+			nil,
+			nil,
+			swin.SW_NORMAL,
+		)
+	} else {
+		args := fmt.tprintf("/select,%v", path)
+		swin.ShellExecuteW(
+			nil,
+			swin.utf8_to_wstring("open"),
+			swin.utf8_to_wstring("explorer.exe"),
+			swin.utf8_to_wstring(args),
+			nil,
+			swin.SW_SHOWNORMAL,
+		)
 	}
 }
 
@@ -136,17 +211,44 @@ load_all_files_thread :: proc(data: ^Load_Context) {
 
 draw_loading_screen :: proc(font: rl.Font, files_indexed: ^int) {
 	big_title_size := rl.MeasureTextEx(font, "HUGINN", 40, 1)
-	rl.DrawTextEx(font, "HUGINN", rl.Vector2 { WINDOW_SIZE[0] / 2 - big_title_size[0] / 2, 30 }, 40, 1, rl.WHITE)
+	rl.DrawTextEx(
+		font,
+		"HUGINN",
+		rl.Vector2{WINDOW_SIZE[0] / 2 - big_title_size[0] / 2, 30},
+		40,
+		1,
+		COLOR_TEXT,
+	)
 
-	indexing_files_text := strings.clone_to_cstring(fmt.tprintf("we are indexing your files"), context.temp_allocator)
+	indexing_files_text := strings.clone_to_cstring(
+		fmt.tprintf("we are indexing your files"),
+		context.temp_allocator,
+	)
 	sub_title_size := rl.MeasureTextEx(font, indexing_files_text, 20, 1)
-	rl.DrawTextEx(font, indexing_files_text, rl.Vector2 { WINDOW_SIZE[0] / 2 - sub_title_size[0] / 2, 80 }, 20, 1, rl.WHITE)
+	rl.DrawTextEx(
+		font,
+		indexing_files_text,
+		rl.Vector2{WINDOW_SIZE[0] / 2 - sub_title_size[0] / 2, 80},
+		20,
+		1,
+		COLOR_TEXT_DIM,
+	)
 
 	loading_screen_animation(font)
 
-	indexed_files_text := strings.clone_to_cstring(fmt.tprintf("%v", sync.atomic_load(files_indexed)), context.temp_allocator)
+	indexed_files_text := strings.clone_to_cstring(
+		fmt.tprintf("%v", sync.atomic_load(files_indexed)),
+		context.temp_allocator,
+	)
 	indexed_files_text_size := rl.MeasureTextEx(font, indexed_files_text, 20, 1)
-	rl.DrawTextEx(font, indexed_files_text, rl.Vector2 { WINDOW_SIZE[0] / 2 - indexed_files_text_size[0] / 2, 140 }, 20, 1, rl.WHITE)
+	rl.DrawTextEx(
+		font,
+		indexed_files_text,
+		rl.Vector2{WINDOW_SIZE[0] / 2 - indexed_files_text_size[0] / 2, 140},
+		20,
+		1,
+		COLOR_TEXT_DIM,
+	)
 }
 
 loading_screen_animation :: proc(font: rl.Font) {
@@ -155,7 +257,14 @@ loading_screen_animation :: proc(font: rl.Font) {
 	text_cstr := strings.clone_to_cstring(text, context.temp_allocator)
 
 	text_size := rl.MeasureTextEx(font, text_cstr, 40, 2)
-	rl.DrawTextEx(font, text_cstr, rl.Vector2 { WINDOW_SIZE[0] / 2 - text_size[0] / 2, 100 }, 40, 2, rl.WHITE)
+	rl.DrawTextEx(
+		font,
+		text_cstr,
+		rl.Vector2{WINDOW_SIZE[0] / 2 - text_size[0] / 2, 100},
+		40,
+		2,
+		COLOR_TEXT_DIM,
+	)
 }
 
 load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
@@ -163,10 +272,15 @@ load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
 	fonts_map := make(map[FONTS_AVAIABLE]rl.Font)
 
 	robotoFont := rl.LoadFontEx("./fonts/Roboto-VariableFont_wdth,wght.ttf", 60, nil, 0)
-	robotoItalicFont := rl.LoadFontEx("./fonts/Roboto-Italic-VariableFont_wdth,wght.ttf", 60, nil, 0)
+	robotoItalicFont := rl.LoadFontEx(
+		"./fonts/Roboto-Italic-VariableFont_wdth,wght.ttf",
+		60,
+		nil,
+		0,
+	)
 
 	fonts_map[FONTS_AVAIABLE.Roboto] = robotoFont
-	fonts_map[FONTS_AVAIABLE.RobotoItalic] = robotoItalicFont 
+	fonts_map[FONTS_AVAIABLE.RobotoItalic] = robotoItalicFont
 
 	return fonts_map
 }
