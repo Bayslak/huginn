@@ -33,10 +33,6 @@ draw_search_screen :: proc(
 		append(query, u8(c))
 	}
 
-	if rl.IsKeyPressed(rl.KeyboardKey.BACKSPACE) {
-		pop(query)
-	}
-
 	if rl.IsKeyPressed(.BACKSPACE) || rl.IsKeyPressedRepeat(.BACKSPACE) {
 		if len(query) > 0 do pop(query)
 	}
@@ -74,9 +70,12 @@ draw_blinking_pointer :: proc(font: rl.Font, query: cstring, box: rl.Rectangle) 
 	}
 }
 
-print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
+print_results :: proc(results: [dynamic]Search_Result, font: rl.Font, scroll_offset: int) {
 	y: f32 = 90
 	max_visible := min(len(results), 30)
+
+    max_offset := max(0, len(results) - max_visible)
+    scroll_offset_to_use := clamp(scroll_offset, 0, max_offset)
 
 	rl.DrawTextEx(font, "Name", {COL_NAME_X, 60}, 18, 1, COLOR_TEXT)
 	rl.DrawTextEx(font, "IsDir", {COL_DIR_X, 60}, 18, 1, COLOR_TEXT)
@@ -84,7 +83,10 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font) {
 	rl.DrawTextEx(font, "Volume", {COL_VOL_X, 60}, 18, 1, COLOR_TEXT)
 	rl.DrawLineEx({COL_NAME_X, 78}, {WINDOW_SIZE[0] - COL_NAME_X, 78}, 1, COLOR_TEXT)
 
-	for i in 0 ..< max_visible {
+    start := scroll_offset_to_use
+    end := min(start + max_visible, len(results))
+
+	for i in start ..< end {
 		r := results[i]
 
 		row_rect := rl.Rectangle{20, y, 1240, 20} // x, y, width, height

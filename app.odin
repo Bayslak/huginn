@@ -36,6 +36,8 @@ start_application :: proc() {
 		files_indexed = &files_indexed,
 	}
 
+	scroll_offset := 0
+
 	for !rl.WindowShouldClose() {
 		defer free_all(context.temp_allocator)
 
@@ -55,10 +57,13 @@ start_application :: proc() {
 				state = APP_STATE.Searching
 			}
 		case .Searching:
+			wheel := rl.GetMouseWheelMove()
+			if wheel != 0 {
+				scroll_offset -= int(wheel) // going negative means we are growing the offset
+			}
 			
 			draw_search_screen(&query, &results, files_maps, fonts_map)
-
-			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto])
+			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto], scroll_offset)
 		}
 	}
 }
