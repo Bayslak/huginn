@@ -24,6 +24,7 @@ start_application :: proc() {
 	loading_done := false
 	loading_worker_started := false
 	files_indexed := 0
+	total_files_indexed := 0
 
 	files_maps: [dynamic]Indexed_Volume
 	query: [dynamic]u8
@@ -33,6 +34,7 @@ start_application :: proc() {
 		files_maps    = &files_maps,
 		loading_done  = &loading_done,
 		files_indexed = &files_indexed,
+		total_files_indexed = &total_files_indexed
 	}
 
 	scroll_offset := 0
@@ -63,7 +65,8 @@ start_application :: proc() {
 			
 			draw_search_screen(&query, &results, files_maps, fonts_map)
 			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto], scroll_offset)
-			draw_state_bar(fonts_map[FONTS_AVAIABLE.RobotoItalic], &files_indexed)
+			draw_state_bar(fonts_map[FONTS_AVAIABLE.RobotoItalic], &total_files_indexed)
+			draw_search_result_number(fonts_map[FONTS_AVAIABLE.Roboto], len(results))
 		}
 	}
 }
@@ -90,4 +93,3 @@ open_file :: proc(path: string, is_dir: bool) {
 		)
 	}
 }
-

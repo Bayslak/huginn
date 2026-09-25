@@ -176,19 +176,33 @@ truncate :: proc(font: rl.Font, text: string, max_width: f32, size, spacing: f32
 	return "..."
 }
 
-draw_state_bar :: proc(font: rl.Font, files_indexed: ^int) {
+draw_state_bar :: proc(font: rl.Font, total_files_indexed: ^int) {
 	rl.DrawTextEx(
 		font,
 		strings.clone_to_cstring(
 			fmt.tprintf(
 				"%d indexed files. Click a row to open the explorer...",
-                sync.atomic_load(files_indexed)
+				sync.atomic_load(total_files_indexed),
 			),
 			context.temp_allocator,
 		),
 		{COL_NAME_X, WINDOW_SIZE[1] - 20},
-		14,
+		16,
 		1,
 		COLOR_TEXT_DIM,
+	)
+}
+
+draw_search_result_number :: proc(font: rl.Font, files_found: int) {
+	rl.DrawTextEx(
+		font,
+		strings.clone_to_cstring(
+			fmt.tprintf("%d files found", files_found),
+			context.temp_allocator,
+		),
+		{COL_VOL_X - RIGHT_PAD * 3, WINDOW_SIZE[1] - 20},
+		16,
+		1,
+		COLOR_TEXT,
 	)
 }

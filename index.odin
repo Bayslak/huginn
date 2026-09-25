@@ -3,16 +3,23 @@ package main
 import "core:fmt"
 import "core:strings"
 import "core:sync"
-import unicode "core:unicode/utf16"
 import swin "core:sys/windows"
+import unicode "core:unicode/utf16"
 
 Load_Context :: struct {
-	files_maps:    ^[dynamic]Indexed_Volume,
-	loading_done:  ^bool,
-	files_indexed: ^int,
+	files_maps:          ^[dynamic]Indexed_Volume,
+	loading_done:        ^bool,
+	files_indexed:       ^int,
+	total_files_indexed: ^int,
 }
 
-get_all_files_of_volume :: proc(handle: swin.HANDLE, files_indexed: ^int) -> (map[u64]WindowsFile, bool) {
+get_all_files_of_volume :: proc(
+	handle: swin.HANDLE,
+	files_indexed: ^int,
+) -> (
+	map[u64]WindowsFile,
+	bool,
+) {
 	mft := MFT_ENUM_DATA {
 		StartFileReferenceNumber = 0,
 		LowUsn                   = 0,
@@ -81,15 +88,16 @@ get_all_files_of_volume :: proc(handle: swin.HANDLE, files_indexed: ^int) -> (ma
 				ParentFileReferenceNumber = rec.ParentFileReferenceNumber,
 				FileName                  = strings.clone(name),
 				FileNameLower             = strings.clone(strings.to_lower(name)),
-				is_directory			  = (rec.FileAttributes & swin.FILE_ATTRIBUTE_DIRECTORY) != 0,
+				is_directory              = (rec.FileAttributes &
+					swin.FILE_ATTRIBUTE_DIRECTORY) != 0,
 			}
 
 			sync.atomic_store(files_indexed, files_found)
 		}
 	}
 
-	fmt.printfln("%v files found.", files_found)
-	fmt.printfln("%v map dimension.", len(f_map))
+	//fmt.printfln("%v files found.", files_found)
+	//fmt.printfln("%v map dimension.", len(f_map))
 
 	return f_map, true
 }
@@ -169,6 +177,7 @@ load_all_files_thread :: proc(data: ^Load_Context) {
 
 		append(data.files_maps, idx_v)
 		close_volume(handle)
+		data.total_files_indexed^ += len(fv_map)
 	}
 
 	sync.atomic_store(data.loading_done, true)

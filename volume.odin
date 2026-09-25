@@ -35,10 +35,10 @@ list_volumes :: proc() -> [dynamic]string {
 		}
 	}
 
-	fmt.println("Volumes avaiable: ")
-	for volume in volumes_list {
-		fmt.println(volume)
-	}
+	//fmt.println("Volumes avaiable: ")
+	//for volume in volumes_list {
+	//	fmt.println(volume)
+	//}
 
 	return volumes_list
 }
@@ -79,7 +79,7 @@ open_volume :: proc(path: swin.wstring) -> (swin.HANDLE, bool) {
 		nil,
 	)
 
-	fmt.printfln("handle = %v", handle)
+	//fmt.printfln("handle = %v", handle)
 
 	if handle == swin.INVALID_HANDLE_VALUE {
 		o_error := swin.GetLastError()
