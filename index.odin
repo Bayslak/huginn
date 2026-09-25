@@ -6,6 +6,12 @@ import "core:sync"
 import unicode "core:unicode/utf16"
 import swin "core:sys/windows"
 
+Load_Context :: struct {
+	files_maps:    ^[dynamic]Indexed_Volume,
+	loading_done:  ^bool,
+	files_indexed: ^int,
+}
+
 get_all_files_of_volume :: proc(handle: swin.HANDLE, files_indexed: ^int) -> (map[u64]WindowsFile, bool) {
 	mft := MFT_ENUM_DATA {
 		StartFileReferenceNumber = 0,
@@ -136,4 +142,34 @@ build_path :: proc(files: map[u64]WindowsFile, frn: u64, volume: string) -> stri
 	}
 
 	return strings.to_string(p_builder)
+}
+
+load_all_files_thread :: proc(data: ^Load_Context) {
+	volumes_list := list_volumes()
+	for volume in volumes_list {
+		path: swin.wstring
+		path = swin.utf8_to_wstring(fmt.tprintf("\\\\.\\%v", volume))
+
+		handle, h_ok := open_volume(path)
+		if !h_ok {
+			fmt.eprintfln("It was impossible to load files on volume %v", volume)
+			continue
+		}
+
+		fv_map, fv_ok := get_all_files_of_volume(handle, data.files_indexed)
+		if !fv_ok {
+			fmt.eprintfln("It was impossible to get files on volume %v", volume)
+			continue
+		}
+
+		idx_v := Indexed_Volume {
+			letter = strings.clone(volume),
+			files  = fv_map,
+		}
+
+		append(data.files_maps, idx_v)
+		close_volume(handle)
+	}
+
+	sync.atomic_store(data.loading_done, true)
 }
