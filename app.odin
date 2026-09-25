@@ -1,7 +1,6 @@
 package main
 
 import "core:fmt"
-import "core:strings"
 import "core:sync"
 import swin "core:sys/windows"
 import "core:thread"
@@ -64,6 +63,7 @@ start_application :: proc() {
 			
 			draw_search_screen(&query, &results, files_maps, fonts_map)
 			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto], scroll_offset)
+			draw_state_bar(fonts_map[FONTS_AVAIABLE.RobotoItalic], &files_indexed)
 		}
 	}
 }

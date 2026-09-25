@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:strings"
+import "core:sync"
 import rl "vendor:raylib"
 
 COL_NAME_X :: 20
@@ -74,8 +75,8 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font, scroll_off
 	y: f32 = 90
 	max_visible := min(len(results), 30)
 
-    max_offset := max(0, len(results) - max_visible)
-    scroll_offset_to_use := clamp(scroll_offset, 0, max_offset)
+	max_offset := max(0, len(results) - max_visible)
+	scroll_offset_to_use := clamp(scroll_offset, 0, max_offset)
 
 	rl.DrawTextEx(font, "Name", {COL_NAME_X, 60}, 18, 1, COLOR_TEXT)
 	rl.DrawTextEx(font, "IsDir", {COL_DIR_X, 60}, 18, 1, COLOR_TEXT)
@@ -83,8 +84,8 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font, scroll_off
 	rl.DrawTextEx(font, "Volume", {COL_VOL_X, 60}, 18, 1, COLOR_TEXT)
 	rl.DrawLineEx({COL_NAME_X, 78}, {WINDOW_SIZE[0] - COL_NAME_X, 78}, 1, COLOR_TEXT)
 
-    start := scroll_offset_to_use
-    end := min(start + max_visible, len(results))
+	start := scroll_offset_to_use
+	end := min(start + max_visible, len(results))
 
 	for i in start ..< end {
 		r := results[i]
@@ -173,4 +174,21 @@ truncate :: proc(font: rl.Font, text: string, max_width: f32, size, spacing: f32
 	}
 
 	return "..."
+}
+
+draw_state_bar :: proc(font: rl.Font, files_indexed: ^int) {
+	rl.DrawTextEx(
+		font,
+		strings.clone_to_cstring(
+			fmt.tprintf(
+				"%d indexed files. Click a row to open the explorer...",
+                sync.atomic_load(files_indexed)
+			),
+			context.temp_allocator,
+		),
+		{COL_NAME_X, WINDOW_SIZE[1] - 20},
+		14,
+		1,
+		COLOR_TEXT_DIM,
+	)
 }
