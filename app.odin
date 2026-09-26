@@ -6,6 +6,8 @@ import swin "core:sys/windows"
 import "core:thread"
 import rl "vendor:raylib"
 
+HUGINN_LOGO := #load("./assets/huginn_logo.png")
+
 APP_STATE :: enum {
 	Loading,
 	Searching,
@@ -15,7 +17,7 @@ WINDOW_SIZE :: rl.Vector2{1280, 720}
 
 start_application :: proc() {
 	rl.InitWindow(auto_cast WINDOW_SIZE[0], auto_cast WINDOW_SIZE[1], "HUGINN")
-	icon := rl.LoadImage("./assets/huginn_logo.png")
+	icon := rl.LoadImageFromMemory(".png", raw_data(HUGINN_LOGO), i32(len(HUGINN_LOGO)))
 	rl.SetWindowIcon(icon)
 	rl.UnloadImage(icon)
 

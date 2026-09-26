@@ -2,6 +2,9 @@ package main
 
 import rl "vendor:raylib"
 
+ROBOTO_DATA := #load("./fonts/Roboto-VariableFont_wdth_wght.ttf")
+ROBOTO_ITALIC_DATA := #load("./fonts/Roboto-Italic-VariableFont_wdth_wght.ttf")
+
 FONTS_AVAIABLE :: enum {
 	Roboto,
 	RobotoItalic,
@@ -21,10 +24,12 @@ load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
 
 	fonts_map := make(map[FONTS_AVAIABLE]rl.Font)
 
-	robotoFont := rl.LoadFontEx("./fonts/Roboto-VariableFont_wdth,wght.ttf", 40, nil, 0)
+	robotoFont := rl.LoadFontFromMemory(".ttf", raw_data(ROBOTO_DATA), i32(len(ROBOTO_DATA)), 40, nil, 0)
 	rl.SetTextureFilter(robotoFont.texture, rl.TextureFilter.BILINEAR)
-	robotoItalicFont := rl.LoadFontEx(
-		"./fonts/Roboto-Italic-VariableFont_wdth,wght.ttf",
+	robotoItalicFont := rl.LoadFontFromMemory(
+		".ttf",
+		raw_data(ROBOTO_ITALIC_DATA),
+		i32(len(ROBOTO_ITALIC_DATA)),
 		40,
 		nil,
 		0,
