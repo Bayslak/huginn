@@ -7,26 +7,30 @@ FONTS_AVAIABLE :: enum {
 	RobotoItalic,
 }
 
-COLOR_BG :: rl.Color{245, 244, 240, 255} // dirty white
-COLOR_TEXT :: rl.Color{44, 44, 42, 255} // almost black
-COLOR_TEXT_DIM :: rl.Color{136, 135, 128, 255} // paths
-COLOR_ACCENT :: rl.Color{55, 138, 221, 255} // light blue
-COLOR_VOL_C :: rl.Color{24, 95, 165, 255} // blue
-COLOR_VOL_D :: rl.Color{15, 110, 86, 255} // verde
-COLOR_HOVER :: rl.Color{230, 229, 223, 255} // hover row
-COLOR_INPUT_BG :: rl.Color{255, 255, 255, 255} // white
+COLOR_BG :: rl.Color{22, 26, 34, 255} // dark deep blue
+COLOR_SURFACE :: rl.Color{30, 35, 45, 255} // surface slightly lighter
+COLOR_TEXT :: rl.Color{232, 234, 237, 255} // warm white
+COLOR_TEXT_DIM :: rl.Color{138, 145, 158, 255} // grey-blue
+COLOR_ACCENT :: rl.Color{56, 138, 221, 255} // strong blue
+COLOR_VOL_C :: rl.Color{96, 165, 250, 255} // light blue
+COLOR_VOL_D :: rl.Color{250, 204, 21, 255} // yellow-amber
+COLOR_HOVER :: rl.Color{38, 44, 56, 255} // slightly ligther than bg
+COLOR_INPUT_BG :: rl.Color{30, 35, 45, 255} // search bar
 
 load_fonts :: proc() -> map[FONTS_AVAIABLE]rl.Font {
 
 	fonts_map := make(map[FONTS_AVAIABLE]rl.Font)
 
-	robotoFont := rl.LoadFontEx("./fonts/Roboto-VariableFont_wdth,wght.ttf", 60, nil, 0)
+	robotoFont := rl.LoadFontEx("./fonts/Roboto-VariableFont_wdth,wght.ttf", 40, nil, 0)
+	rl.SetTextureFilter(robotoFont.texture, rl.TextureFilter.BILINEAR)
 	robotoItalicFont := rl.LoadFontEx(
 		"./fonts/Roboto-Italic-VariableFont_wdth,wght.ttf",
-		60,
+		40,
 		nil,
 		0,
 	)
+	rl.SetTextureFilter(robotoItalicFont.texture, rl.TextureFilter.BILINEAR)
+
 
 	fonts_map[FONTS_AVAIABLE.Roboto] = robotoFont
 	fonts_map[FONTS_AVAIABLE.RobotoItalic] = robotoItalicFont
