@@ -6,7 +6,7 @@ import swin "core:sys/windows"
 import "core:thread"
 import rl "vendor:raylib"
 
-HUGINN_LOGO := #load("./assets/huginn_logo.png")
+HUGINN_LOGO := #load("../assets/huginn_logo.png")
 
 APP_STATE :: enum {
 	Loading,

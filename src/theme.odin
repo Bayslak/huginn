@@ -2,8 +2,8 @@ package main
 
 import rl "vendor:raylib"
 
-ROBOTO_DATA := #load("./fonts/Roboto-VariableFont_wdth_wght.ttf")
-ROBOTO_ITALIC_DATA := #load("./fonts/Roboto-Italic-VariableFont_wdth_wght.ttf")
+ROBOTO_DATA := #load("../fonts/Roboto-VariableFont_wdth_wght.ttf")
+ROBOTO_ITALIC_DATA := #load("../fonts/Roboto-Italic-VariableFont_wdth_wght.ttf")
 
 FONTS_AVAIABLE :: enum {
 	Roboto,

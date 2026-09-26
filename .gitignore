@@ -4,6 +4,7 @@ bin/
 *.pdb
 *.obj
 *.dll
+*.res
 
 # VS Code
 .vscode/

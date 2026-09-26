@@ -50,7 +50,7 @@ The project moves through a few distinct layers, each a self-contained piece:
 Requires the [Odin compiler](https://odin-lang.org/docs/install/).
 
 ```
-odin build . -out:huginn.exe -resource:huginn.rc -subsystem:windows -o:speed
+odin build ./src/. -out:huginn.exe -resource:./build/huginn.rc -subsystem:windows -o:speed
 ```
 
 The `-resource:huginn.rc` flag embeds the manifest (for admin elevation) and the icon into the executable. Fonts are bundled directly into the binary with `#load`, so the result is a single self-contained `.exe` with no external files.
