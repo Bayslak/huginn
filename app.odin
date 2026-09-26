@@ -15,6 +15,10 @@ WINDOW_SIZE :: rl.Vector2{1280, 720}
 
 start_application :: proc() {
 	rl.InitWindow(auto_cast WINDOW_SIZE[0], auto_cast WINDOW_SIZE[1], "HUGINN")
+	icon := rl.LoadImage("./assets/huginn_logo.png")
+	rl.SetWindowIcon(icon)
+	rl.UnloadImage(icon)
+
 	defer rl.CloseWindow()
 
 	fonts_map := load_fonts()
