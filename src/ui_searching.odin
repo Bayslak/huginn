@@ -75,11 +75,11 @@ draw_blinking_pointer :: proc(font: rl.Font, query: cstring, box: rl.Rectangle) 
 draw_indicator :: proc(results: ^[dynamic]Search_Result, current_indicator_offset: int, is_dragging: ^bool) -> int {
 
 	if len(results) == 0 do return 0
-
-	indicator_height: f32 = 10
-
+	
 	track_top: f32 = 80
 	track_height: f32 = (f32)(WINDOW_SIZE[1] - 80 - 20)
+	
+	indicator_height: f32 = max(20, track_height * (f32(30) / f32(len(results))))
 
 	max_scroll := max(1, len(results) - 30)
 
