@@ -44,6 +44,7 @@ start_application :: proc() {
 	}
 
 	scroll_offset := 0
+	is_dragging := false
 
 	for !rl.WindowShouldClose() {
 		defer free_all(context.temp_allocator)
@@ -68,7 +69,13 @@ start_application :: proc() {
 			if wheel != 0 {
 				scroll_offset -= int(wheel) // going negative means we are growing the offset
 			}
-			
+
+			if len(results) > 0 && len(results) > 30 {
+				scroll_offset = draw_indicator(&results, scroll_offset, &is_dragging)
+				max_scroll := max(0, len(results) - 30)
+				scroll_offset = clamp(scroll_offset, 0, max_scroll)
+			}
+
 			draw_search_screen(&query, &results, files_maps, fonts_map)
 			print_results(results, fonts_map[FONTS_AVAIABLE.Roboto], scroll_offset)
 			draw_state_bar(fonts_map[FONTS_AVAIABLE.RobotoItalic], &total_files_indexed)

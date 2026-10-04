@@ -9,6 +9,7 @@ COL_NAME_X :: 20
 COL_DIR_X :: 400
 COL_PATH_X :: 460
 COL_VOL_X :: 1200
+COL_INDICATOR_X :: 1260
 RIGHT_PAD :: 40
 
 volume_color :: proc(letter: string) -> rl.Color {
@@ -71,13 +72,70 @@ draw_blinking_pointer :: proc(font: rl.Font, query: cstring, box: rl.Rectangle) 
 	}
 }
 
+draw_indicator :: proc(results: ^[dynamic]Search_Result, current_indicator_offset: int, is_dragging: ^bool) -> int {
+
+	if len(results) == 0 do return 0
+
+	indicator_height: f32 = 10
+
+	track_top: f32 = 80
+	track_height: f32 = (f32)(WINDOW_SIZE[1] - 80 - 20)
+
+	max_scroll := max(1, len(results) - 30)
+
+	progress_now := f32(current_indicator_offset) / f32(max_scroll)
+	progress_now = clamp(progress_now, 0, 1)
+	indicator_y := track_top + progress_now * (track_height - indicator_height)
+	indicator_rect := rl.Rectangle {
+		f32(COL_INDICATOR_X + 5),
+		indicator_y,
+		10,
+		indicator_height
+	}
+
+	mouse := rl.GetMousePosition()
+
+	if rl.IsMouseButtonPressed(.LEFT) {
+		if rl.CheckCollisionPointRec(mouse, indicator_rect) {
+			is_dragging^ = true
+		}
+	}
+
+	if rl.IsMouseButtonReleased(.LEFT) {
+		is_dragging^ = false
+	}
+
+	progress: f32
+
+	if is_dragging^ {
+		progress = (mouse.y - track_top) / track_height
+		progress = clamp(progress, 0, 1)
+		new_scroll := int(progress * f32(max_scroll))
+		
+		indicator_y := track_top + progress * (track_height - indicator_height)
+		rl.DrawRectangle(COL_INDICATOR_X + 5, i32(indicator_y), 10, i32(indicator_height), COLOR_TEXT)
+
+		return new_scroll
+	} else {
+		progress = f32(current_indicator_offset) / f32(max_scroll)
+		progress = clamp(progress, 0, 1)
+		
+		indicator_y := track_top + progress * (track_height - indicator_height)
+		rl.DrawRectangle(COL_INDICATOR_X + 5, i32(indicator_y), 10, i32(indicator_height), COLOR_TEXT)
+	}
+
+	return current_indicator_offset
+}
+
 print_results :: proc(results: [dynamic]Search_Result, font: rl.Font, scroll_offset: int) {
 	y: f32 = 90
-	max_visible := min(len(results), 30)
+	results_len := len(results)
 
+	max_visible := min(results_len, 30)
+	
 	max_offset := max(0, len(results) - max_visible)
 	scroll_offset_to_use := clamp(scroll_offset, 0, max_offset)
-
+	
 	rl.DrawTextEx(font, "Name", {COL_NAME_X, 60}, 18, 1, COLOR_TEXT)
 	rl.DrawTextEx(font, "IsDir", {COL_DIR_X, 60}, 18, 1, COLOR_TEXT)
 	rl.DrawTextEx(font, "Path", {COL_PATH_X, 60}, 18, 1, COLOR_TEXT)
@@ -90,7 +148,7 @@ print_results :: proc(results: [dynamic]Search_Result, font: rl.Font, scroll_off
 	for i in start ..< end {
 		r := results[i]
 
-		row_rect := rl.Rectangle{20, y, 1240, 20} // x, y, width, height
+		row_rect := rl.Rectangle{20, y, COL_VOL_X, 20}
 		mouse := rl.GetMousePosition()
 		if rl.CheckCollisionPointRec(mouse, row_rect) {
 			rl.DrawRectangleRec(row_rect, COLOR_HOVER)
